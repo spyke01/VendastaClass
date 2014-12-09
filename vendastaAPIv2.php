@@ -84,26 +84,17 @@ class vendastaAPIv2
 	*
 	*/		
 	public function request( $path = '', $request_vars = array(), $method = 'POST' ) {
-		$qs = 'pid=' . $this->pid . '&apiKey=' . $this->apiKey;
 		$response = array(
 			'code' => '',
 			'result' => '',
 		);
 		
-		foreach( $request_vars AS $key => $value ) {
-			if ( is_array( $value ) ) {
-				foreach( $value AS $value2 ) {
-					$qs .= '&' . $key . '=' . urlencode($value2);
-				}				
-			} else {
-				$qs .= '&' . $key . '=' . urlencode($value);
-			}
-		}
-		
 		//construct full api url
-		$url = $this->api_url . $path;
-		if( strtoupper( $method ) == 'GET' )
-		$url .= $qs;
+		$url = $this->api_url . $path . '?apiUser=' . $this->apiUser . '&apiKey=' . $this->apiKey;
+		
+		if( strtoupper( $method ) == 'GET' ) {
+			$url .= '&' . http_build_query($request_vars);
+		}
 		
 		//initialize a new curl object            
 		$ch = curl_init();
@@ -111,15 +102,16 @@ class vendastaAPIv2
 		curl_setopt( $ch, CURLOPT_URL, $url );
 		curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, FALSE );
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, TRUE );
-		//echo $url . '?' . $qs;
 		
 		switch(strtoupper($method)) {
 			case "GET":
 				curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+				echo $url;
 				break;
 			case "POST":
 				curl_setopt($ch, CURLOPT_POST, TRUE);
-				curl_setopt($ch, CURLOPT_POSTFIELDS, $qs);
+				curl_setopt($ch, CURLOPT_POSTFIELDS, $request_vars);
+				print_r($request_vars);				
 				break;
 		}
 		
