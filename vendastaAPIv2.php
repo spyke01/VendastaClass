@@ -72,6 +72,30 @@ class vendastaAPIv2
 		$sucessCodes = array( 200, 201, 202 );	
 		return ( in_array( $requestArray['code'], $sucessCodes ) ) ? false : true;
 	}
+	
+	/** 
+	* Build a vendasta friendly URL string as a replacement for http_query_vars()
+	*
+	* @param array $requestArray	This is the array returned from _request
+	* @param string $keyOverride	This is used for arrays
+	*
+	*/
+	public function build_query( $requestArray, $keyOverride = '' ) {	
+		$returnVar = '';
+		
+		foreach ( $requestArray as $key => $value ) {
+			if ( is_array( $value ) ) {
+				$returnVar .= '&' . $this->build_query( $value, $key );				
+			} else {
+				if ( $keyOverride == '' )
+					$returnVar .= '&' . $key . '=' . $value;
+				else
+					$returnVar .= '&' . $keyOverride . '=' . $value;
+			}
+		}
+		
+		return ltrim( $returnVar, '&' );
+	}
 
 	/**
 	* Request using PHP CURL functions
@@ -90,10 +114,11 @@ class vendastaAPIv2
 		);
 		
 		//construct full api url
-		$url = $this->api_url . $path . '?apiUser=' . $this->apiUser . '&apiKey=' . $this->apiKey;
+		$url .= ( stristr( $path, 'http://' ) === false && stristr( $path, 'https://' ) === false ) ? $this->api_url . $path : $path;
+		$url .= '?apiUser=' . $this->apiUser . '&apiKey=' . $this->apiKey;
 		
-		if( strtoupper( $method ) == 'GET' ) {
-			$url .= '&' . http_build_query($request_vars);
+		if( strtoupper( $method ) == 'GET' && count( $request_vars ) > 0 ) {
+			$url .= '&' . $this->build_query($request_vars);
 		}
 		
 		//initialize a new curl object            
@@ -105,13 +130,13 @@ class vendastaAPIv2
 		
 		switch(strtoupper($method)) {
 			case "GET":
-				curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
-				echo $url;
+				curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
+				//echo $url;
 				break;
 			case "POST":
-				curl_setopt($ch, CURLOPT_POST, TRUE);
-				curl_setopt($ch, CURLOPT_POSTFIELDS, $request_vars);
-				print_r($request_vars);				
+				curl_setopt( $ch, CURLOPT_POST, TRUE );
+				curl_setopt( $ch, CURLOPT_POSTFIELDS, $this->build_query($request_vars) );
+				//print_r(http_build_query($request_vars));				
 				break;
 		}
 		
