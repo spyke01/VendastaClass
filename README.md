@@ -30,7 +30,10 @@ To use v2 you would need to make calls like this:
 $vendastaAPIv2 = new vendastaAPIv2( 'pid', 'apiKey' );
 $visibilityResult = $vendastaAPIv2->request( 'endpoint/url/', array(
   'param1' => 'param1Val',
-  'param2' => 'param2Val',
+  'param2' => array(
+  	'param2Val',
+  	'param2Val',
+  ),
 ), 'POST');
 if ( $vendastaAPIv2->hasError($visibilityResult) ) { echo $vendastaAPIv2->lookupError($visibilityResult); }
 else { 
